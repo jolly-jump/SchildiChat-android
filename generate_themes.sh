@@ -180,6 +180,38 @@ function generate_accent() {
 
 default_accent="@color/accent_sc"
 
+function generate_accent() {
+    local name="$1"
+    local color_lt="$2"
+    local color_dk="$3"
+    local color_presence="$4"
+    local name_str="$5"
+    if [ -z "$color_presence" ]; then
+        color_presence_lt="?colorAccent"
+        color_presence_dk="?colorAccent"
+    else
+        color_presence_lt="$color_presence"
+        color_presence_dk="$color_presence"
+    fi
+    echo "    {"
+    (
+    echo "      \"id\": \"$name\","
+    if [ ! -z "$name_str" ]; then
+        echo "      \"name\": \"$name_str\","
+    fi
+    echo "      \"accent_light\": \"$color_lt\","
+    echo "      \"accent_dark\": \"$color_dk\","
+    if [ ! -z "$color_presence" ]; then
+        echo "      \"presence_follows_accent\": false,"
+    fi
+    ) | tr '\n' ' ' | sed 's|, *$||'
+    echo "    },"
+}
+
+(
+echo "{"
+echo "  \"variants\": ["
+(
 generate_accent "Amber" "#ffa000" "#ffab00" "$default_accent"
 generate_accent "BlueLight" "#03a9f4" "#03a9f4" "" "Light blue"
 generate_accent "Blue" "#2196F3" "#2196F3" ""
@@ -203,6 +235,10 @@ generate_accent "Red" "#ff0000" "#ff0000" "$default_accent"
 generate_accent "Teal" "#008577" "#80cbc4" ""
 generate_accent "Turquoise" "#00C1C1" "#00C1C1" ""
 generate_accent "Yellow" "#FBC02D" "#FBC02D" "$default_accent"
+) | tr '\n' ' ' | sed 's|}, *$|}|'
+echo "  ]"
+echo "}"
+) | jq
 
 # We have foreground on accent colors, better skip these
 #generate_accent "Grey" "#808080" "#808080"
