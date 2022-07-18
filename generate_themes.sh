@@ -186,6 +186,9 @@ function generate_accent() {
     local color_dk="$3"
     local color_presence="$4"
     local name_str="$5"
+    if [ -z "$name_str" ]; then
+        name_str="$name"
+    fi
     if [ -z "$color_presence" ]; then
         color_presence_lt="?colorAccent"
         color_presence_dk="?colorAccent"
@@ -196,9 +199,7 @@ function generate_accent() {
     echo "    {"
     (
     echo "      \"id\": \"$name\","
-    if [ ! -z "$name_str" ]; then
-        echo "      \"name\": \"$name_str\","
-    fi
+    echo "      \"name\": \"$name_str\","
     echo "      \"accent_light\": \"$color_lt\","
     echo "      \"accent_dark\": \"$color_dk\","
     if [ ! -z "$color_presence" ]; then
