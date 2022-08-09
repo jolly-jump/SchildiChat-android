@@ -915,7 +915,7 @@ class TimelineFragment @Inject constructor(
     }
 
     private fun startOpenFileIntent(action: RoomDetailViewEvents.OpenFile) {
-        if (action.mimeType == MimeTypes.Apk) {
+        if (false && action.mimeType == MimeTypes.Apk) {
             installApk(action)
         } else {
             openFile(action)
