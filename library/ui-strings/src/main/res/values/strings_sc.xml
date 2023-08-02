@@ -239,4 +239,14 @@
 
     <string name="settings_integrations_scalar_warning">⚠️ This setting by default (unless overridden by your homeserver\'s configuration) enables access to \"scalar\", Element\'s integration manager which is unfortunately proprietary, i.e. its source code is not open and can not be checked by the public or the SchildiChat developers.</string>
 
+    <!-- Pinned messages -->
+    <string name="notice_user_pinned_event">%1$s pinned a message.</string>
+    <string name="notice_user_unpinned_event">%1$s unpinned a message.</string>
+    <string name="notice_user_pinned_event_by_you">You pinned a message.</string>
+    <string name="notice_user_unpinned_event_by_you">You unpinned a message.</string>
+    <string name="action_open_pinned_events">Open Pinned Messages</string>
+    <string name="pinning_event">Pin</string>
+    <string name="unpinning_event">Unpin</string>
+    <string name="pinned_events_timeline_title">Pinned Messages</string>
+    <string name="labs_enable_pinned_events">Enable Pinned Messages</string>
 </resources>

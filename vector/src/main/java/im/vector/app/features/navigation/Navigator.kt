@@ -27,6 +27,7 @@ import androidx.fragment.app.FragmentActivity
 import im.vector.app.features.analytics.plan.ViewRoom
 import im.vector.app.features.crypto.recover.SetupMode
 import im.vector.app.features.displayname.getBestName
+import im.vector.app.features.home.room.pinnedmessages.arguments.PinnedEventsTimelineArgs
 import im.vector.app.features.home.room.threads.arguments.ThreadTimelineArgs
 import im.vector.app.features.location.LocationData
 import im.vector.app.features.location.LocationSharingMode
@@ -199,6 +200,8 @@ interface Navigator {
     fun openThread(context: Context, threadTimelineArgs: ThreadTimelineArgs, eventIdToNavigate: String? = null)
 
     fun openThreadList(context: Context, threadTimelineArgs: ThreadTimelineArgs)
+
+    fun openPinnedEvents(context: Context, pinnedEventsTimelineArgs: PinnedEventsTimelineArgs)
 
     fun openScreenSharingPermissionDialog(
             screenCaptureIntent: Intent,

@@ -85,6 +85,7 @@ internal class DefaultTimelineService @AssistedInject constructor(
                 lightweightSettingsStorage = lightweightSettingsStorage,
                 clock = clock,
                 stateEventDataSource = stateEventDataSource,
+                timelineEventDataSource = timelineEventDataSource,
                 localEchoEventFactory = localEchoEventFactory
         )
     }

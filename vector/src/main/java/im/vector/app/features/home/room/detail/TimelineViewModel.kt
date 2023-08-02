@@ -105,6 +105,7 @@ import org.matrix.android.sdk.api.session.Session
 import org.matrix.android.sdk.api.session.crypto.MXCryptoError
 import org.matrix.android.sdk.api.session.crypto.verification.EVerificationState
 import org.matrix.android.sdk.api.session.events.model.EventType
+import org.matrix.android.sdk.api.session.events.model.getIdsOfPinnedEvents
 import org.matrix.android.sdk.api.session.events.model.RelationType
 import org.matrix.android.sdk.api.session.events.model.content.WithHeldCode
 import org.matrix.android.sdk.api.session.events.model.isAttachmentMessage
@@ -263,10 +264,12 @@ class TimelineViewModel @AssistedInject constructor(
     }
 
     private fun initSafe(room: Room, timeline: Timeline) {
-        timeline.start(initialState.rootThreadEventId)
+        timeline.start(initialState.rootThreadEventId, initialState.isFromPinnedEventsTimeline)
         timeline.addListener(this)
         observeMembershipChanges()
-        observeSummaryState()
+        if (!initialState.isPinnedEventsTimeline()) {
+            observeSummaryState()
+        }
         getUnreadState()
         observeSyncState()
         observeDataStore()
@@ -535,6 +538,8 @@ class TimelineViewModel @AssistedInject constructor(
 
     override fun handle(action: RoomDetailAction) {
         when (action) {
+            is RoomDetailAction.PinEvent -> handlePinEvent(action)
+            is RoomDetailAction.UnpinEvent -> handleUnpinEvent(action)
             is RoomDetailAction.ComposerFocusChange -> handleComposerFocusChange(action)
             is RoomDetailAction.SendMedia -> handleSendMedia(action)
             is RoomDetailAction.SendSticker -> handleSendSticker(action)
@@ -944,6 +949,7 @@ class TimelineViewModel @AssistedInject constructor(
                     else -> false
                 }
             }
+            initialState.isPinnedEventsTimeline() -> false
             else -> {
                 when (itemId) {
                     R.id.timeline_setting -> false // replaced by show_room_info (downstream)
@@ -954,6 +960,7 @@ class TimelineViewModel @AssistedInject constructor(
                     // Show Join conference button only if there is an active conf id not joined. Otherwise fallback to default video disabled. ^
                     R.id.join_conference -> !state.isCallOptionAvailable() && state.jitsiState.confId != null && !state.jitsiState.hasJoined
                     R.id.search -> state.isSearchAvailable()
+                    R.id.open_pinned_events -> vectorPreferences.arePinnedEventsEnabled() && areTherePinnedEvents()
                     R.id.menu_timeline_thread_list -> vectorPreferences.areThreadMessagesEnabled()
                     // SC extras start
                     R.id.show_room_info -> true // SC
@@ -1161,6 +1168,44 @@ class TimelineViewModel @AssistedInject constructor(
         if (state.highlightedEventId != null) {
             setState { copy(highlightedEventId = null) }
         }
+    }
+
+    private fun handlePinEvent(action: RoomDetailAction.PinEvent) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                room
+                    ?.stateService()
+                    ?.pinEvent(action.eventId)
+                _viewEvents.post(RoomDetailViewEvents.ActionSuccess(action))
+            } catch (failure: Throwable) {
+                _viewEvents.post(RoomDetailViewEvents.ActionFailure(action, failure))
+            }
+        }
+    }
+
+    private fun handleUnpinEvent(action: RoomDetailAction.UnpinEvent) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                room
+                    ?.stateService()
+                    ?.unpinEvent(action.eventId)
+                _viewEvents.post(RoomDetailViewEvents.ActionSuccess(action))
+            } catch (failure: Throwable) {
+                _viewEvents.post(RoomDetailViewEvents.ActionFailure(action, failure))
+            }
+        }
+    }
+
+    private fun getIdsOfPinnedEvents(): List<String>? {
+        return room
+                ?.stateService()
+                ?.getStateEvent(EventType.STATE_ROOM_PINNED_EVENT, QueryStringValue.Equals(""))
+                ?.getIdsOfPinnedEvents()
+    }
+
+    private fun areTherePinnedEvents(): Boolean {
+        val idsOfPinnedEvents = getIdsOfPinnedEvents() ?: return false
+        return idsOfPinnedEvents.isNotEmpty()
     }
 
     private fun handleResendEvent(action: RoomDetailAction.ResendMessage) {

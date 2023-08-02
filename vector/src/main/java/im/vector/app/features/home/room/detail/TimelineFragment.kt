@@ -176,6 +176,7 @@ import im.vector.app.features.home.room.detail.timeline.url.PreviewUrlRetriever
 import im.vector.app.features.home.room.detail.upgrade.MigrateRoomBottomSheet
 import im.vector.app.features.home.room.detail.views.RoomDetailLazyLoadedViews
 import im.vector.app.features.home.room.detail.widget.RoomWidgetsBottomSheet
+import im.vector.app.features.home.room.pinnedmessages.arguments.PinnedEventsTimelineArgs
 import im.vector.app.features.home.room.threads.ThreadsManager
 import im.vector.app.features.home.room.threads.arguments.ThreadTimelineArgs
 import im.vector.app.features.home.room.typing.TypingHelper
@@ -411,6 +412,10 @@ class TimelineFragment :
                     pushCounter,
                     vectorPreferences.developerShowDebugInfo()
             )
+        }
+
+        if (isPinnedEventsTimeline()) {
+            views.hideComposerViews()
         }
 
         timelineViewModel.observeViewEvents {
@@ -1067,6 +1072,10 @@ class TimelineFragment :
                 requireActivity().restart()
                 true
             }
+            R.id.open_pinned_events -> {
+                navigateToPinnedEvents()
+                true
+            }
             R.id.menu_timeline_thread_list -> {
                 navigateToThreadList()
                 true
@@ -1390,7 +1399,7 @@ class TimelineFragment :
     }
 
     private fun updateJumpToReadMarkerViewVisibility() {
-        if (isThreadTimeLine()) return
+        if (isThreadTimeLine() || isPinnedEventsTimeline()) return
         viewLifecycleOwner.lifecycleScope.launch {
             withResumed {
                 viewLifecycleOwner.lifecycleScope.launch {
@@ -1480,6 +1489,9 @@ class TimelineFragment :
             vectorBaseActivity.finish()
         }
         updateLiveLocationIndicator(mainState.isSharingLiveLocation)
+        if (isPinnedEventsTimeline()) {
+            views.hideComposerViews()
+        }
     }
 
     private fun handleRoomSummaryFailure(asyncRoomSummary: Fail<RoomSummary>) {
@@ -1535,6 +1547,19 @@ class TimelineFragment :
                     views.includeThreadToolbar.roomToolbarThreadSubtitleTextView.text = it.displayName
                 }
                 views.includeThreadToolbar.roomToolbarThreadTitleTextView.text = resources.getText(R.string.thread_timeline_title)
+            }
+            isPinnedEventsTimeline() -> {
+                withState(timelineViewModel) { state ->
+                    timelineArgs.let {
+                        val matrixItem = MatrixItem.RoomItem(it.roomId, state.asyncRoomSummary()?.displayName, state.asyncRoomSummary()?.avatarUrl)
+                        avatarRenderer.render(matrixItem, views.includeThreadToolbar.roomToolbarThreadImageView)
+                        views.includeThreadToolbar.roomToolbarThreadShieldImageView.render(state.asyncRoomSummary()?.roomEncryptionTrustLevel)
+                        views.includeThreadToolbar.roomToolbarThreadSubtitleTextView.text = state.asyncRoomSummary()?.displayName
+                    }
+                }
+                views.includeRoomToolbar.roomToolbarContentView.isVisible = false
+                views.includeThreadToolbar.roomToolbarThreadConstraintLayout.isVisible = true
+                views.includeThreadToolbar.roomToolbarThreadTitleTextView.text = resources.getText(R.string.pinned_events_timeline_title)
             }
             else -> {
                 views.includeRoomToolbar.roomToolbarContentView.isVisible = true
@@ -1863,7 +1888,7 @@ class TimelineFragment :
         this.view?.hideKeyboard()
 
         MessageActionsBottomSheet
-                .newInstance(roomId, informationData, isThreadTimeLine())
+                .newInstance(roomId, informationData, isThreadTimeLine(), isPinnedEventsTimeline())
                 .show(requireActivity().supportFragmentManager, "MESSAGE_CONTEXTUAL_ACTIONS")
 
         return true
@@ -2159,6 +2184,15 @@ class TimelineFragment :
                     requireActivity().toast(R.string.error_voice_message_cannot_reply_or_edit)
                 }
             }
+            is EventSharedAction.PinEvent -> {
+                timelineViewModel.handle(RoomDetailAction.PinEvent(action.eventId))
+            }
+            is EventSharedAction.UnpinEvent -> {
+                timelineViewModel.handle(RoomDetailAction.UnpinEvent(action.eventId))
+            }
+            is EventSharedAction.ViewPinnedEventInRoom -> {
+                handleViewInRoomAction(action.eventId)
+            }
             is EventSharedAction.ReplyInThread -> {
                 if (withState(messageComposerViewModel) { it.isVoiceMessageIdle }) {
                     onReplyInThreadClicked(action)
@@ -2339,6 +2373,27 @@ class TimelineFragment :
         }
     }
 
+    /**
+     * Navigate to pinned events for the current room using the PinnedEventsActivity.
+     */
+    private fun navigateToPinnedEvents() {
+        context?.let {
+            val pinnedEventsTimelineArgs = PinnedEventsTimelineArgs(
+                    roomId = timelineArgs.roomId,
+            )
+            navigator.openPinnedEvents(it, pinnedEventsTimelineArgs)
+        }
+    }
+
+    private fun handleViewInRoomAction(eventId: String) {
+        val newRoom = timelineArgs.copy(threadTimelineArgs = null, pinnedEventsTimelineArgs = null, eventId = eventId)
+        context?.let { con ->
+            val intent = RoomDetailActivity.newIntent(con, newRoom, false)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            con.startActivity(intent)
+        }
+    }
+
     // VectorInviteView.Callback
     override fun onAcceptInvite() {
         timelineViewModel.handle(RoomDetailAction.AcceptInvite)
@@ -2420,6 +2475,11 @@ class TimelineFragment :
      * Returns true if the current room is a Thread room, false otherwise.
      */
     private fun isThreadTimeLine(): Boolean = withState(timelineViewModel) { it.isThreadTimeline() }
+
+    /**
+     * Returns true if the current room is a Pinned Messages room, false otherwise.
+     */
+    private fun isPinnedEventsTimeline(): Boolean = withState(timelineViewModel) { it.isPinnedEventsTimeline() }
 
     /**
      * Returns true if the current room is a local room, false otherwise.

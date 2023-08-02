@@ -17,6 +17,7 @@
 package im.vector.app.features.home.room.detail.arguments
 
 import android.os.Parcelable
+import im.vector.app.features.home.room.pinnedmessages.arguments.PinnedEventsTimelineArgs
 import im.vector.app.features.home.room.threads.arguments.ThreadTimelineArgs
 import im.vector.app.features.share.SharedData
 import kotlinx.parcelize.Parcelize
@@ -30,6 +31,7 @@ data class TimelineArgs(
         val openAtFirstUnread: Boolean? = null,
         val openAnonymously: Boolean = false,
         val threadTimelineArgs: ThreadTimelineArgs? = null,
+        val pinnedEventsTimelineArgs: PinnedEventsTimelineArgs? = null,
         val switchToParentSpace: Boolean = false,
         val isInviteAlreadyAccepted: Boolean = false
 ) : Parcelable

@@ -60,6 +60,8 @@ import im.vector.app.features.home.room.detail.arguments.TimelineArgs
 import im.vector.app.features.home.room.detail.search.SearchActivity
 import im.vector.app.features.home.room.detail.search.SearchArgs
 import im.vector.app.features.home.room.filtered.FilteredRoomsActivity
+import im.vector.app.features.home.room.pinnedmessages.arguments.PinnedEventsTimelineArgs
+import im.vector.app.features.home.room.pinnedmessages.PinnedEventsActivity
 import im.vector.app.features.home.room.threads.ThreadsActivity
 import im.vector.app.features.home.room.threads.arguments.ThreadListArgs
 import im.vector.app.features.home.room.threads.arguments.ThreadTimelineArgs
@@ -605,6 +607,15 @@ class DefaultNavigator @Inject constructor(
                                 avatarUrl = threadTimelineArgs.avatarUrl,
                                 roomEncryptionTrustLevel = threadTimelineArgs.roomEncryptionTrustLevel
                         )
+                )
+        )
+    }
+
+    override fun openPinnedEvents(context: Context, pinnedEventsTimelineArgs: PinnedEventsTimelineArgs) {
+        context.startActivity(
+                PinnedEventsActivity.newIntent(
+                        context = context,
+                        pinnedEventsTimelineArgs = pinnedEventsTimelineArgs
                 )
         )
     }

@@ -31,6 +31,8 @@ import org.matrix.android.sdk.api.extensions.orFalse
 import org.matrix.android.sdk.api.session.events.model.Event
 import org.matrix.android.sdk.api.session.events.model.EventType
 import org.matrix.android.sdk.api.session.events.model.content.EncryptionEventContent
+import org.matrix.android.sdk.api.session.events.model.getIdsOfPinnedEvents
+import org.matrix.android.sdk.api.session.events.model.getPreviousIdsOfPinnedEvents
 import org.matrix.android.sdk.api.session.events.model.isThread
 import org.matrix.android.sdk.api.session.events.model.toModel
 import org.matrix.android.sdk.api.session.room.model.GuestAccess
@@ -90,6 +92,7 @@ class NoticeEventFormatter @Inject constructor(
             EventType.STATE_ROOM_WIDGET_LEGACY -> formatWidgetEvent(event, senderName)
             EventType.STATE_ROOM_TOMBSTONE -> formatRoomTombstoneEvent(event, senderName, isDm)
             EventType.STATE_ROOM_POWER_LEVELS -> formatRoomPowerLevels(event, senderName)
+            EventType.STATE_ROOM_PINNED_EVENT -> formatPinnedEvent(event, senderName)
             EventType.CALL_INVITE,
             EventType.CALL_CANDIDATES,
             EventType.CALL_HANGUP,
@@ -120,6 +123,27 @@ class NoticeEventFormatter @Inject constructor(
                 null
             }
         }
+    }
+
+    private fun formatPinnedEvent(event: Event, disambiguatedDisplayName: String): CharSequence? {
+        val idsOfPinnedEvents: List<String> = event.getIdsOfPinnedEvents() ?: return null
+        val previousIdsOfPinnedEvents: List<String>? = event.getPreviousIdsOfPinnedEvents()
+        // An event was pinned
+        val pinnedEventString = if (event.resolvedPrevContent() == null || previousIdsOfPinnedEvents != null && previousIdsOfPinnedEvents.size < idsOfPinnedEvents.size) {
+            if (event.isSentByCurrentUser()) {
+                sp.getString(R.string.notice_user_pinned_event_by_you, disambiguatedDisplayName)
+            } else {
+                sp.getString(R.string.notice_user_pinned_event, disambiguatedDisplayName)
+            }
+        // An event was unpinned
+        } else {
+            if (event.isSentByCurrentUser()) {
+                sp.getString(R.string.notice_user_unpinned_event_by_you, disambiguatedDisplayName)
+            } else {
+                sp.getString(R.string.notice_user_unpinned_event, disambiguatedDisplayName)
+            }
+        }
+        return pinnedEventString
     }
 
     private fun formatRoomPowerLevels(event: Event, disambiguatedDisplayName: String): CharSequence? {

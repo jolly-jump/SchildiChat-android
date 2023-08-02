@@ -35,6 +35,7 @@ Here you can find some extra features and changes compared to Element Android (w
 - Render media captions ([MSC2530](https://github.com/matrix-org/matrix-spec-proposals/pull/2530))
 - Escape @room in the reply fallback to avoid unintentional room pings when replying
 - Render sticker body in room/thread preview
+- Pinned messages, contributed by [cintek](https://github.com/cintek) [for Element](https://github.com/vector-im/element-android/pull/7762)
 
 - Branding (name, app icon, links)
 - Show a toast instead of a snackbar after copying text, in order to not block the input area right after copying

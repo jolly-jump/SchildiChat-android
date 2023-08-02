@@ -42,9 +42,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import org.matrix.android.sdk.api.extensions.orFalse
+import org.matrix.android.sdk.api.query.QueryStringValue
 import org.matrix.android.sdk.api.session.Session
 import org.matrix.android.sdk.api.session.crypto.keysbackup.KeysBackupState
 import org.matrix.android.sdk.api.session.events.model.EventType
+import org.matrix.android.sdk.api.session.events.model.getIdsOfPinnedEvents
 import org.matrix.android.sdk.api.session.events.model.isAttachmentMessage
 import org.matrix.android.sdk.api.session.events.model.isContentReportable
 import org.matrix.android.sdk.api.session.events.model.isTextMessage
@@ -131,7 +133,8 @@ class MessageActionsViewModel @AssistedInject constructor(
                     val canReact = powerLevelsHelper.isUserAllowedToSend(session.myUserId, false, EventType.REACTION)
                     val canRedact = powerLevelsHelper.isUserAbleToRedact(session.myUserId)
                     val canSendMessage = powerLevelsHelper.isUserAllowedToSend(session.myUserId, false, EventType.MESSAGE)
-                    val permissions = ActionPermissions(canSendMessage = canSendMessage, canRedact = canRedact, canReact = canReact)
+                    val canPinEvent = powerLevelsHelper.isUserAllowedToSend(session.myUserId, true, EventType.STATE_ROOM_PINNED_EVENT)
+                    val permissions = ActionPermissions(canSendMessage = canSendMessage, canRedact = canRedact, canReact = canReact, canPinEvent = canPinEvent)
                     setState {
                         copy(actionPermissions = permissions)
                     }
@@ -337,6 +340,15 @@ class MessageActionsViewModel @AssistedInject constructor(
     ) {
         val eventId = timelineEvent.eventId
         if (!timelineEvent.root.isRedacted()) {
+            if (initialState.isFromPinnedEventsTimeline && vectorPreferences.arePinnedEventsEnabled()) {
+                add(EventSharedAction.ViewPinnedEventInRoom(eventId))
+                if (actionPermissions.canPinEvent) {
+                    add(EventSharedAction.UnpinEvent(eventId))
+                }
+            } else {
+
+            // wrong indention for merge-ability
+
             if (canReply(timelineEvent, messageContent, actionPermissions)) {
                 add(EventSharedAction.Reply(eventId))
             }
@@ -368,6 +380,20 @@ class MessageActionsViewModel @AssistedInject constructor(
 
             if (canViewReactions(timelineEvent)) {
                 add(EventSharedAction.ViewReactions(informationData))
+            }
+
+            if (actionPermissions.canPinEvent && vectorPreferences.arePinnedEventsEnabled()) {
+                val isPinned = room
+                        ?.stateService()
+                        ?.getStateEvent(EventType.STATE_ROOM_PINNED_EVENT, QueryStringValue.Equals(""))
+                        ?.getIdsOfPinnedEvents()
+                        ?.contains(eventId)
+                        .orFalse()
+                if (isPinned) {
+                    add(EventSharedAction.UnpinEvent(eventId))
+                } else {
+                    add(EventSharedAction.PinEvent(eventId))
+                }
             }
 
             if (canQuote(timelineEvent, messageContent, actionPermissions) && !vectorPreferences.simplifiedMode()) {
@@ -407,7 +433,7 @@ class MessageActionsViewModel @AssistedInject constructor(
                     )
                 }
             }
-        }
+        }} // wrong indention on purpose - end
 
         if (vectorPreferences.developerMode()) {
             if (timelineEvent.isEncrypted() && timelineEvent.root.mCryptoError != null) {

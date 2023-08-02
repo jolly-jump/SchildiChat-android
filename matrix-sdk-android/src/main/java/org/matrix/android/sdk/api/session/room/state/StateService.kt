@@ -67,6 +67,16 @@ interface StateService {
     suspend fun deleteAvatar()
 
     /**
+     * Pin an event of the room.
+     */
+    suspend fun pinEvent(eventId: String)
+
+    /**
+     * Unpin an event of the room.
+     */
+    suspend fun unpinEvent(eventId: String)
+
+    /**
      * Send a state event to the room.
      * @param eventType The type of event to send.
      * @param stateKey The state_key for the state to send. Can be an empty string.

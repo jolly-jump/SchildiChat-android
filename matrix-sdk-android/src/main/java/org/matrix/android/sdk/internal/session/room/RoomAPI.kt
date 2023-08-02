@@ -241,6 +241,17 @@ internal interface RoomAPI {
     suspend fun getRoomState(@Path("roomId") roomId: String): List<Event>
 
     /**
+     * Get specific state event of a room
+     * Ref: https://matrix.org/docs/spec/client_server/r0.6.1#get-matrix-client-r0-rooms-roomid-state-eventtype-statekey
+     */
+    @GET(NetworkConstants.URI_API_PREFIX_PATH_R0 + "rooms/{roomId}/state/{eventType}/{state_key}")
+    suspend fun getRoomState(
+                @Path("roomId") roomId: String,
+                @Path("eventType") eventType: String,
+                @Path("state_key") stateKey: String
+    ): Content
+
+    /**
      * Paginate relations for event based in normal topological order.
      * @param roomId the room Id
      * @param eventId the event Id

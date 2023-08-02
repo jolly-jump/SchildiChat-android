@@ -84,6 +84,7 @@ data class RoomDetailViewState(
         val isSharingLiveLocation: Boolean = false,
         val showKeyboardWhenPresented: Boolean = false,
         val sharedData: SharedData? = null,
+        val isFromPinnedEventsTimeline: Boolean = false,
 ) : MavericksState {
 
     constructor(args: TimelineArgs) : this(
@@ -98,6 +99,7 @@ data class RoomDetailViewState(
             rootThreadEventId = args.threadTimelineArgs?.rootThreadEventId,
             showKeyboardWhenPresented = args.threadTimelineArgs?.showKeyboard.orFalse(),
             sharedData = args.sharedData,
+            isFromPinnedEventsTimeline = args.pinnedEventsTimelineArgs != null,
     )
 
     fun isCallOptionAvailable(): Boolean {
@@ -121,6 +123,8 @@ data class RoomDetailViewState(
     fun isPublic() = asyncRoomSummary()?.isPublic == true
 
     fun isThreadTimeline() = rootThreadEventId != null
+
+    fun isPinnedEventsTimeline() = isFromPinnedEventsTimeline
 
     fun isLocalRoom() = RoomLocalEcho.isLocalEchoId(roomId)
 }
