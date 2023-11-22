@@ -615,7 +615,7 @@ class NotificationUtils @Inject constructor(
                 // TODO Group should be current user display name
                 .setGroup(stringProvider.getString(R.string.app_name))
                 // In order to avoid notification making sound twice (due to the summary notification)
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_ALL)
+                .setGroupAlertBehavior(if (vectorPreferences.onlyAlertOnce()) NotificationCompat.GROUP_ALERT_SUMMARY else NotificationCompat.GROUP_ALERT_CHILDREN)
                 .setSmallIcon(smallIcon)
                 // Set primary color (important for Wear 2.0 Notifications).
                 .setColor(accentColor)
@@ -712,7 +712,7 @@ class NotificationUtils @Inject constructor(
                 .setContentTitle(inviteNotifiableEvent.roomName ?: stringProvider.getString(R.string.app_name))
                 .setContentText(inviteNotifiableEvent.description)
                 .setGroup(stringProvider.getString(R.string.app_name))
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_ALL)
+                .setGroupAlertBehavior(if (vectorPreferences.onlyAlertOnce()) NotificationCompat.GROUP_ALERT_SUMMARY else NotificationCompat.GROUP_ALERT_CHILDREN)
                 .setSmallIcon(smallIcon)
                 .setColor(accentColor)
                 .apply {
@@ -792,7 +792,7 @@ class NotificationUtils @Inject constructor(
                 .setContentTitle(stringProvider.getString(R.string.app_name))
                 .setContentText(simpleNotifiableEvent.description)
                 .setGroup(stringProvider.getString(R.string.app_name))
-                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_ALL)
+                .setGroupAlertBehavior(if (vectorPreferences.onlyAlertOnce()) NotificationCompat.GROUP_ALERT_SUMMARY else NotificationCompat.GROUP_ALERT_CHILDREN)
                 .setSmallIcon(smallIcon)
                 .setColor(accentColor)
                 .setAutoCancel(true)
